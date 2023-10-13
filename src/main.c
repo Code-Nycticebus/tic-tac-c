@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INPUT_MAX 4
-
+/* Game logic */
 typedef enum Player {
   PLAYER_EMPTY = '\0',
   PLAYER_X = 'X',
@@ -14,6 +13,7 @@ typedef enum Player {
 
 #define FIELD_SIZE 9
 Player field[FIELD_SIZE];
+typedef size_t (*input_fn)(Player, const Player[FIELD_SIZE]);
 
 bool move_valid(const Player *f, size_t index) {
   return f[index] == PLAYER_EMPTY;
@@ -58,13 +58,16 @@ void field_display(const Player *f) {
   printf("\n");
 }
 
-bool turn(Player player, size_t (*input)(Player player, const Player *)) {
+bool turn(Player player, input_fn input) {
   size_t index = input(player, field);
   field_insert(player, index);
   return check_win(player, field);
 }
 
+/* Input */
+
 size_t player_input(Player player, const Player *f) {
+#define INPUT_MAX 4
   size_t index = 0;
   bool input_valid = false;
   while (!input_valid) {
@@ -91,6 +94,7 @@ bool check_draw(const Player *f) {
   return true;
 }
 
+/* Minmax */
 int minmax(bool maximize, Player player, Player *f);
 
 int max(Player player, Player *sim_field) {
@@ -132,9 +136,10 @@ int minmax(bool maximize, Player player, Player *f) {
   if (check_draw(f)) {
     return 0;
   }
+
   if (maximize) {
     return max(player, f);
-  }
+  } // else
   return min(player, f);
 }
 
@@ -159,13 +164,16 @@ size_t ai_input(Player player, const Player *f) {
   return move;
 }
 
+/* Game loop */
 int main(void) {
+  bool single_player = true;
+
   Player winning_player = PLAYER_EMPTY;
   Player players[] = {PLAYER_X, PLAYER_O};
-  size_t (*input[])(Player, const Player *) = {player_input, ai_input};
+  input_fn input[] = {player_input, single_player ? ai_input : player_input};
   for (size_t i = 0; i < FIELD_SIZE; i++) {
     field_display(field);
-    Player current_player = players[i % 2];
+    const Player current_player = players[i % 2];
     if (turn(current_player, input[i % 2])) {
       winning_player = current_player;
       break;
