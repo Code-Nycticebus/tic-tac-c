@@ -95,45 +95,6 @@ bool check_draw(const Player *f) {
 }
 
 /* Minmax */
-int minmax(bool maximize, Player player, Player *f);
-
-int max(Player player, Player *sim_field) {
-  int score = INT_MIN;
-  if (move_valid(sim_field, 4)) {
-    return 2;
-  }
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
-    if (move_valid(sim_field, i)) {
-      sim_field[i] = player;
-      int temp =
-          minmax(false, player == PLAYER_X ? PLAYER_O : PLAYER_X, sim_field);
-      if (score < temp) {
-        score = temp;
-      }
-      sim_field[i] = PLAYER_EMPTY;
-    }
-  }
-  return score;
-}
-
-int min(Player player, Player *sim_field) {
-  int score = INT_MAX;
-  if (move_valid(sim_field, 4)) {
-    return -2;
-  }
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
-    if (move_valid(sim_field, i)) {
-      sim_field[i] = player;
-      int temp =
-          minmax(true, player == PLAYER_X ? PLAYER_O : PLAYER_X, sim_field);
-      if (temp < score) {
-        score = temp;
-      }
-      sim_field[i] = PLAYER_EMPTY;
-    }
-  }
-  return score;
-}
 
 int minmax(bool maximize, Player player, Player *f) {
   if (check_win(player, f)) {
@@ -144,29 +105,51 @@ int minmax(bool maximize, Player player, Player *f) {
   }
 
   if (maximize) {
-    return max(player, f);
+    int score = INT_MIN;
+    for (size_t i = 0; i < FIELD_SIZE; i++) {
+      if (move_valid(f, i)) {
+        f[i] = player;
+        int temp = minmax(false, player == PLAYER_X ? PLAYER_O : PLAYER_X, f);
+        f[i] = PLAYER_EMPTY;
+        if (score < temp) {
+          score = temp;
+        }
+      }
+    }
+    return score;
+
   } // else
-  return min(player, f);
+  int score = INT_MAX;
+  for (size_t i = 0; i < FIELD_SIZE; i++) {
+    if (move_valid(f, i)) {
+      f[i] = player;
+      int temp = minmax(true, player == PLAYER_X ? PLAYER_O : PLAYER_X, f);
+      f[i] = PLAYER_EMPTY;
+      if (temp < score) {
+        score = temp;
+      }
+    }
+  }
+  return score;
 }
 
-size_t ai_input(Player player, const Player *f) {
+size_t ai_input(Player player, const Player *current_field) {
   size_t move = 0;
   int score = INT_MIN;
-  Player sim_field[FIELD_SIZE];
-  memcpy(sim_field, f, FIELD_SIZE * sizeof(Player));
+  Player f[FIELD_SIZE];
+  memcpy(f, current_field, FIELD_SIZE * sizeof(Player));
   for (size_t i = 0; i < FIELD_SIZE; i++) {
-    if (move_valid(sim_field, i)) {
-      sim_field[i] = player;
-      int temp =
-          minmax(false, player == PLAYER_X ? PLAYER_O : PLAYER_X, sim_field);
+    if (move_valid(f, i)) {
+      f[i] = player;
+      int temp = minmax(false, player == PLAYER_X ? PLAYER_O : PLAYER_X, f);
+      f[i] = PLAYER_EMPTY;
       if (score < temp) {
         score = temp;
         move = i;
       }
-      sim_field[i] = PLAYER_EMPTY;
     }
   }
-  printf("%c: %ld\n", player, move + 1);
+  printf("%c: %ld %d\n", player, move + 1, score);
   return move;
 }
 
