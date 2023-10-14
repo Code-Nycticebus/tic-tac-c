@@ -99,6 +99,9 @@ int minmax(bool maximize, Player player, Player *f);
 
 int max(Player player, Player *sim_field) {
   int score = INT_MIN;
+  if (move_valid(sim_field, 4)) {
+    return 2;
+  }
   for (size_t i = 0; i < FIELD_SIZE; i++) {
     if (move_valid(sim_field, i)) {
       sim_field[i] = player;
@@ -115,6 +118,9 @@ int max(Player player, Player *sim_field) {
 
 int min(Player player, Player *sim_field) {
   int score = INT_MAX;
+  if (move_valid(sim_field, 4)) {
+    return -2;
+  }
   for (size_t i = 0; i < FIELD_SIZE; i++) {
     if (move_valid(sim_field, i)) {
       sim_field[i] = player;
@@ -166,11 +172,10 @@ size_t ai_input(Player player, const Player *f) {
 
 /* Game loop */
 int main(void) {
-  bool single_player = true;
-
   Player winning_player = PLAYER_EMPTY;
   Player players[] = {PLAYER_X, PLAYER_O};
-  input_fn input[] = {player_input, single_player ? ai_input : player_input};
+  input_fn input[] = {player_input, ai_input};
+
   for (size_t i = 0; i < FIELD_SIZE; i++) {
     field_display(field);
     const Player current_player = players[i % 2];
