@@ -94,11 +94,18 @@ bool check_draw(const Player *f) {
   return true;
 }
 
+Player switch_player(Player current) {
+  return current == PLAYER_X ? PLAYER_O : PLAYER_X;
+}
+
 /* Minmax */
 
 int minmax(bool maximize, Player player, Player *f) {
   if (check_win(player, f)) {
-    return maximize ? 1 : -1;
+    return maximize ? 2 : -2;
+  }
+  if (check_win(switch_player(player), f)) {
+    return maximize ? -2 : 2;
   }
   if (check_draw(f)) {
     return 0;
@@ -109,7 +116,7 @@ int minmax(bool maximize, Player player, Player *f) {
     for (size_t i = 0; i < FIELD_SIZE; i++) {
       if (move_valid(f, i)) {
         f[i] = player;
-        int temp = minmax(false, player == PLAYER_X ? PLAYER_O : PLAYER_X, f);
+        int temp = minmax(false, switch_player(player), f);
         f[i] = PLAYER_EMPTY;
         if (score < temp) {
           score = temp;
@@ -123,7 +130,7 @@ int minmax(bool maximize, Player player, Player *f) {
   for (size_t i = 0; i < FIELD_SIZE; i++) {
     if (move_valid(f, i)) {
       f[i] = player;
-      int temp = minmax(true, player == PLAYER_X ? PLAYER_O : PLAYER_X, f);
+      int temp = minmax(true, switch_player(player), f);
       f[i] = PLAYER_EMPTY;
       if (temp < score) {
         score = temp;
@@ -136,12 +143,15 @@ int minmax(bool maximize, Player player, Player *f) {
 size_t ai_input(Player player, const Player *current_field) {
   size_t move = 0;
   int score = INT_MIN;
-  Player f[FIELD_SIZE];
+  if (move_valid(current_field, 4)) {
+    return 4;
+  }
+  Player f[FIELD_SIZE] = {0};
   memcpy(f, current_field, FIELD_SIZE * sizeof(Player));
   for (size_t i = 0; i < FIELD_SIZE; i++) {
     if (move_valid(f, i)) {
       f[i] = player;
-      int temp = minmax(false, player == PLAYER_X ? PLAYER_O : PLAYER_X, f);
+      int temp = minmax(false, switch_player(player), f);
       f[i] = PLAYER_EMPTY;
       if (score < temp) {
         score = temp;
@@ -149,7 +159,7 @@ size_t ai_input(Player player, const Player *current_field) {
       }
     }
   }
-  printf("%c: %ld %d\n", player, move + 1, score);
+  printf("%c: %ld\n", player, move + 1);
   return move;
 }
 
