@@ -141,26 +141,25 @@ int minmax(bool maximize, Player player, Player *f) {
 }
 
 size_t ai_input(Player player, const Player *current_field) {
-  size_t move = 0;
+  size_t best_move = 0;
   int score = INT_MIN;
-  if (move_valid(current_field, 4)) {
-    return 4;
-  }
+  const size_t moves[FIELD_SIZE] = {4, 0, 2, 6, 8, 1, 3, 5, 7};
   Player f[FIELD_SIZE] = {0};
   memcpy(f, current_field, FIELD_SIZE * sizeof(Player));
   for (size_t i = 0; i < FIELD_SIZE; i++) {
-    if (move_valid(f, i)) {
-      f[i] = player;
+    size_t move = moves[i];
+    if (move_valid(f, move)) {
+      f[move] = player;
       int temp = minmax(false, switch_player(player), f);
-      f[i] = PLAYER_EMPTY;
+      f[move] = PLAYER_EMPTY;
       if (score < temp) {
         score = temp;
-        move = i;
+        best_move = move;
       }
     }
   }
-  printf("%c: %ld\n", player, move + 1);
-  return move;
+  printf("%c: %ld\n", player, best_move + 1);
+  return best_move;
 }
 
 /* Game loop */
