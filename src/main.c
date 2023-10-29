@@ -15,46 +15,41 @@ typedef enum Player {
 } Player;
 
 #define FIELD_SIZE 9
-
 typedef Player Field[FIELD_SIZE];
+typedef uint32_t (*input_fn)(Player, const Field);
 
-typedef size_t (*input_fn)(Player, const Field);
-
-bool move_valid(const Field f, size_t index) {
+bool move_valid(const Field f, uint32_t index) {
   return f[index] == PLAYER_EMPTY;
-}
-
-void field_insert(Field field, Player player, size_t field_index) {
-  field[field_index] = player;
 }
 
 bool check_win(Player player, const Field f) {
   // Check rows
-  for (int i = 0; i < 3; i++) {
+  for (uint32_t i = 0; i < 3; i++) {
     if (f[i * 3] == player && f[i * 3 + 1] == player &&
         f[i * 3 + 2] == player) {
-      return true; // Found a winning row
+      return true;
     }
   }
 
   // Check columns
-  for (int i = 0; i < 3; i++) {
-    if (f[i] == player && f[i + 3] == player && f[i + 6] == player) { // NOLINT
-      return true; // Found a winning column
+  for (uint32_t i = 0; i < 3; i++) {
+    if (f[i + 3 * 0] == player && f[i + 3 * 1] == player &&
+        f[i + 3 * 2] == player) {
+      return true;
     }
   }
 
   // Check diagonals
   if ((f[0] == player && f[4] == player && f[8] == player) || // NOLINT
       (f[2] == player && f[4] == player && f[6] == player)) { // NOLINT
-    return true; // Found a winning diagonal
+    return true;
   }
 
-  return false; // No winning combination found
+  return false;
 }
 
 void field_display(const Field f) {
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
+  for (uint32_t i = 0; i < FIELD_SIZE; i++) {
     if (i != 0 && i % 3 == 0) {
       printf("\n");
     }
@@ -64,15 +59,15 @@ void field_display(const Field f) {
 }
 
 bool turn(Field field, Player player, input_fn input) {
-  size_t index = input(player, field);
-  field_insert(field, player, index);
+  uint32_t index = input(player, field);
+  field[index] = player;
   return check_win(player, field);
 }
 
 /* Input */
 
-size_t player_input(Player player, const Field f) {
-  size_t index = 0;
+uint32_t player_input(Player player, const Field f) {
+  uint32_t index = 0;
   bool input_valid = false;
   while (!input_valid) {
     printf("%c: ", player);
@@ -90,7 +85,7 @@ size_t player_input(Player player, const Field f) {
 }
 
 bool check_draw(const Field f) {
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
+  for (uint32_t i = 0; i < FIELD_SIZE; i++) {
     if (move_valid(f, i)) {
       return false;
     }
@@ -103,7 +98,6 @@ Player switch_player(Player current) {
 }
 
 /* Minmax */
-
 int minmax(bool maximize, Player player, Field f) {
   if (check_win(player, f)) {
     return maximize ? 2 : -2;
@@ -117,7 +111,7 @@ int minmax(bool maximize, Player player, Field f) {
 
   if (maximize) {
     int score = INT_MIN;
-    for (size_t i = 0; i < FIELD_SIZE; i++) {
+    for (uint32_t i = 0; i < FIELD_SIZE; i++) {
       if (move_valid(f, i)) {
         f[i] = player;
         int temp = minmax(false, switch_player(player), f);
@@ -131,7 +125,7 @@ int minmax(bool maximize, Player player, Field f) {
 
   } // else
   int score = INT_MAX;
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
+  for (uint32_t i = 0; i < FIELD_SIZE; i++) {
     if (move_valid(f, i)) {
       f[i] = player;
       int temp = minmax(true, switch_player(player), f);
@@ -144,14 +138,14 @@ int minmax(bool maximize, Player player, Field f) {
   return score;
 }
 
-size_t ai_input(Player player, const Field current_field) {
-  size_t best_move = 0;
+uint32_t ai_input(Player player, const Field current_field) {
+  uint32_t best_move = 0;
   int score = INT_MIN;
-  const size_t moves[FIELD_SIZE] = {4, 0, 2, 6, 8, 1, 3, 5, 7};
+  const uint32_t moves[FIELD_SIZE] = {4, 0, 2, 6, 8, 1, 3, 5, 7};
   Player f[FIELD_SIZE] = {0};
   memcpy(f, current_field, FIELD_SIZE * sizeof(Player));
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
-    size_t move = moves[i];
+  for (uint32_t i = 0; i < FIELD_SIZE; i++) {
+    uint32_t move = moves[i];
     if (move_valid(f, move)) {
       f[move] = player;
       int temp = minmax(false, switch_player(player), f);
@@ -166,10 +160,12 @@ size_t ai_input(Player player, const Field current_field) {
   return best_move;
 }
 
+/* !Minmax */
+
 void game(const input_fn input[2], const Player players[2]) {
   Field field = {PLAYER_EMPTY};
   Player winning_player = PLAYER_EMPTY;
-  for (size_t i = 0; i < FIELD_SIZE; i++) {
+  for (uint32_t i = 0; i < FIELD_SIZE; i++) {
     field_display(field);
     const Player current_player = players[i % 2];
     if (turn(field, current_player, input[i % 2])) {
