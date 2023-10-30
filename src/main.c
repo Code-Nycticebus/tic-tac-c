@@ -162,7 +162,8 @@ uint32_t ai_input(Player player, const Field current_field) {
 
 /* !Minmax */
 
-void game(const input_fn input[2], const Player players[2]) {
+void game(const input_fn input[2]) {
+  Player players[] = {PLAYER_X, PLAYER_O};
   Field field = {PLAYER_EMPTY};
   Player winning_player = PLAYER_EMPTY;
   for (uint32_t i = 0; i < FIELD_SIZE; i++) {
@@ -199,14 +200,8 @@ bool replay(void) {
 
 /* Game loop */
 int main(void) {
-  Player players[] = {PLAYER_X, PLAYER_O};
   input_fn input[] = {player_input, ai_input};
-
-  bool playing = true;
-  while (playing) {
-    game(input, players);
-    if (!replay()) {
-      playing = false;
-    }
-  }
+  do {
+    game(input);
+  } while (replay());
 }
